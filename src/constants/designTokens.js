@@ -1,0 +1,12 @@
+export const COLORS = {
+  BRIGHT_SNOW: "#f9fafb",
+  INK_BLACK: "#111827",
+  SLATE_GREY: "#6b7280",
+  ELECTRIC_SAPPHIRE: "#6366f1",
+  BRIGHT_INDIGO: "#4338ca",
+  SOFT_PERIWINKLE: "#818cf8",
+  STRAWBERRY_RED: "#ef4444",
+  GOLDEN_ORANGE: "#f59e0b",
+  ROYAL_BLUE: "#2563eb",
+  MINT_LEAF: "#10b981",
+};
