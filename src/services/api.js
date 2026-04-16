@@ -20,6 +20,17 @@ const getToken = () => {
   return window.localStorage.getItem("th_token") || readCookie("th_token");
 };
 
+const clearLocalSession = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.removeItem("th_token");
+  window.localStorage.removeItem("th_user");
+  window.localStorage.removeItem("th_role");
+  document.cookie = "th_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  document.cookie = "th_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+};
+
 api.interceptors.request.use((config) => {
   const token = getToken();
   if (token) {
@@ -32,7 +43,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
-      // Handle token expiration or unauthorized responses here if needed.
+      clearLocalSession();
     }
     return Promise.reject(error);
   }

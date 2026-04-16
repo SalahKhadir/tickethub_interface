@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import api from "@/services/api";
 
 export const AuthContext = createContext(null);
 
@@ -30,6 +32,36 @@ const clearCookie = (name) => {
   document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 };
 
+const normalizeRole = (value) => {
+  if (!value) {
+    return null;
+  }
+  let normalized = String(value).toLowerCase();
+  while (normalized.startsWith("role_")) {
+    normalized = normalized.slice("role_".length);
+  }
+  return normalized;
+};
+
+const readRoleFromToken = (decoded) => {
+  if (!decoded || typeof decoded !== "object") {
+    return null;
+  }
+  const roleClaim =
+    decoded.role ||
+    decoded.roles?.[0] ||
+    decoded.authorities?.[0] ||
+    decoded["custom:role"];
+  return normalizeRole(roleClaim);
+};
+
+const readUsernameFromToken = (decoded) => {
+  if (!decoded || typeof decoded !== "object") {
+    return null;
+  }
+  return decoded.username || decoded.sub || decoded.email || null;
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,21 +86,28 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = useCallback(async ({ user: nextUser, token }) => {
-    if (token) {
-      window.localStorage.setItem(TOKEN_KEY, token);
-      writeCookie(TOKEN_KEY, token);
+  const login = useCallback(async ({ email, password }) => {
+    const response = await api.post("/auth/login", { email, password });
+    const { token, accessToken } = response.data || {};
+    const resolvedToken = token || accessToken;
+
+    if (!resolvedToken) {
+      throw new Error("Missing token in login response.");
     }
 
-    if (nextUser) {
-      window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
-      setUser(nextUser);
+    const decoded = jwtDecode(resolvedToken);
+    const role = readRoleFromToken(decoded) || "client";
+    const username = readUsernameFromToken(decoded) || email;
+    const nextUser = { username, role };
 
-      if (nextUser.role) {
-        window.localStorage.setItem(ROLE_KEY, nextUser.role);
-        writeCookie(ROLE_KEY, nextUser.role);
-      }
-    }
+    window.localStorage.setItem(TOKEN_KEY, resolvedToken);
+    writeCookie(TOKEN_KEY, resolvedToken);
+    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    window.localStorage.setItem(ROLE_KEY, role);
+    writeCookie(ROLE_KEY, role);
+    setUser(nextUser);
+
+    return nextUser;
   }, []);
 
   const logout = useCallback(() => {
