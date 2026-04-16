@@ -1,3 +1,6 @@
+import AuthGate from "@/components/features/AuthGate";
+import DashboardLogoutButton from "@/components/features/DashboardLogoutButton";
+
 export const metadata = {
   title: "Dashboard | TicketHub",
 };
@@ -13,10 +16,15 @@ export default function DashboardLayout({ children }) {
             </p>
             <h1 className="text-lg font-semibold text-ink-black">Dashboard</h1>
           </div>
-          <span className="text-sm text-slate-grey">Role-protected area</span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-grey">Role-protected area</span>
+            <DashboardLogoutButton />
+          </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-6 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-6xl px-6 py-8">
+        <AuthGate>{children}</AuthGate>
+      </main>
     </div>
   );
 }

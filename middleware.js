@@ -29,10 +29,23 @@ export function middleware(request) {
 
   const token = request.cookies.get("th_token")?.value;
   const role = request.cookies.get("th_role")?.value;
+  const enabled = request.cookies.get("th_enabled")?.value;
 
   if (!token) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (!role) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (enabled === "false") {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("pending", "1");
     return NextResponse.redirect(loginUrl);
   }
 

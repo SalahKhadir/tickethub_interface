@@ -9,6 +9,7 @@ export const AuthContext = createContext(null);
 const TOKEN_KEY = "th_token";
 const USER_KEY = "th_user";
 const ROLE_KEY = "th_role";
+const ENABLED_KEY = "th_enabled";
 
 const readCookie = (name) => {
   if (typeof document === "undefined") {
@@ -47,12 +48,7 @@ const readRoleFromToken = (decoded) => {
   if (!decoded || typeof decoded !== "object") {
     return null;
   }
-  const roleClaim =
-    decoded.role ||
-    decoded.roles?.[0] ||
-    decoded.authorities?.[0] ||
-    decoded["custom:role"];
-  return normalizeRole(roleClaim);
+  return normalizeRole(decoded.role);
 };
 
 const readUsernameFromToken = (decoded) => {
@@ -60,6 +56,19 @@ const readUsernameFromToken = (decoded) => {
     return null;
   }
   return decoded.username || decoded.sub || decoded.email || null;
+};
+
+const readEnabledFromToken = (decoded) => {
+  if (!decoded || typeof decoded !== "object") {
+    return null;
+  }
+  if (typeof decoded.enabled === "boolean") {
+    return decoded.enabled;
+  }
+  if (typeof decoded.enabled === "string") {
+    return decoded.enabled.toLowerCase() === "true";
+  }
+  return null;
 };
 
 export function AuthProvider({ children }) {
@@ -80,42 +89,87 @@ export function AuthProvider({ children }) {
     }
 
     if (storedToken && !storedUser) {
-      setUser({ role: readCookie(ROLE_KEY) || "unknown" });
+      setUser({
+        role: readCookie(ROLE_KEY) || "unknown",
+        enabled: readCookie(ENABLED_KEY) !== "false",
+      });
     }
 
     setLoading(false);
   }, []);
 
   const login = useCallback(async ({ email, password }) => {
-    const response = await api.post("/auth/login", { email, password });
-    const { token, accessToken } = response.data || {};
-    const resolvedToken = token || accessToken;
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      const { token, accessToken, enabled: enabledFromResponse } =
+        response.data || {};
+      const resolvedToken = token || accessToken;
 
-    if (!resolvedToken) {
-      throw new Error("Missing token in login response.");
+      if (!resolvedToken) {
+        throw new Error("Missing token in login response.");
+      }
+
+      const decoded = jwtDecode(resolvedToken);
+      const roleFromToken = readRoleFromToken(decoded);
+      if (!roleFromToken) {
+        console.warn("Role claim missing in JWT; defaulting to client.");
+      }
+      const role = roleFromToken || "client";
+      const username = readUsernameFromToken(decoded) || email;
+      const enabledFromToken = readEnabledFromToken(decoded);
+      const enabled =
+        typeof enabledFromResponse === "boolean"
+          ? enabledFromResponse
+          : enabledFromToken ?? true;
+      const nextUser = { username, role, enabled };
+
+      window.localStorage.setItem(TOKEN_KEY, resolvedToken);
+      writeCookie(TOKEN_KEY, resolvedToken);
+      window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+      window.localStorage.setItem(ROLE_KEY, role);
+      writeCookie(ROLE_KEY, role);
+      window.localStorage.setItem(ENABLED_KEY, String(enabled));
+      writeCookie(ENABLED_KEY, String(enabled));
+      setUser(nextUser);
+
+      return nextUser;
+    } catch (error) {
+      const status = error?.response?.status;
+      const backendMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "";
+      const normalizedMessage = String(backendMessage).toLowerCase();
+
+      if ((status === 401 || status === 403) && normalizedMessage) {
+        if (normalizedMessage.includes("disabled")) {
+          throw new Error(
+            "Your account is awaiting administrator approval."
+          );
+        }
+      }
+
+      if (status === 401) {
+        throw new Error("Invalid email or password.");
+      }
+      if (status === 403) {
+        throw new Error("Your account is disabled.");
+      }
+      if (!error?.response) {
+        throw new Error("Server is unreachable. Check your connection.");
+      }
+      throw new Error("An unexpected error occurred.");
     }
-
-    const decoded = jwtDecode(resolvedToken);
-    const role = readRoleFromToken(decoded) || "client";
-    const username = readUsernameFromToken(decoded) || email;
-    const nextUser = { username, role };
-
-    window.localStorage.setItem(TOKEN_KEY, resolvedToken);
-    writeCookie(TOKEN_KEY, resolvedToken);
-    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
-    window.localStorage.setItem(ROLE_KEY, role);
-    writeCookie(ROLE_KEY, role);
-    setUser(nextUser);
-
-    return nextUser;
   }, []);
 
   const logout = useCallback(() => {
     window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
     window.localStorage.removeItem(ROLE_KEY);
+    window.localStorage.removeItem(ENABLED_KEY);
     clearCookie(TOKEN_KEY);
     clearCookie(ROLE_KEY);
+    clearCookie(ENABLED_KEY);
     setUser(null);
   }, []);
 

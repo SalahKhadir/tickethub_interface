@@ -15,8 +15,10 @@ export default function LoginForm() {
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState({ message: "", type: "error" });
   const [loading, setLoading] = useState(false);
+
+  const pendingParam = searchParams.get("pending") === "1";
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -25,7 +27,7 @@ export default function LoginForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
+    setError({ message: "", type: "error" });
     setLoading(true);
 
     try {
@@ -45,7 +47,12 @@ export default function LoginForm() {
         router.replace(ROUTES.CLIENT);
       }
     } catch (err) {
-      setError("Unable to sign in. Check your credentials.");
+      const message =
+        err?.message || "Unable to sign in. Check your credentials.";
+      const isWarning = message
+        .toLowerCase()
+        .includes("awaiting administrator approval");
+      setError({ message, type: isWarning ? "warning" : "error" });
     } finally {
       setLoading(false);
     }
@@ -71,7 +78,22 @@ export default function LoginForm() {
         placeholder="Enter your password"
         required
       />
-      {error ? <p className="text-sm text-strawberry-red">{error}</p> : null}
+      {pendingParam ? (
+        <div className="rounded-xl border border-golden-orange/30 bg-golden-orange/10 px-4 py-3 text-sm text-golden-orange">
+          Your account is awaiting administrator approval.
+        </div>
+      ) : null}
+      {error.message ? (
+        <div
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            error.type === "warning"
+              ? "border-golden-orange/30 bg-golden-orange/10 text-golden-orange"
+              : "border-strawberry-red/30 bg-strawberry-red/10 text-strawberry-red"
+          }`}
+        >
+          {error.message}
+        </div>
+      ) : null}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Signing in..." : "Sign in"}
       </Button>
