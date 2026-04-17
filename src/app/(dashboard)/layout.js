@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import AuthGate from "@/components/features/AuthGate";
 import DashboardLogoutButton from "@/components/features/DashboardLogoutButton";
 
@@ -5,7 +7,20 @@ export const metadata = {
   title: "Dashboard | TicketHub",
 };
 
-export default function DashboardLayout({ children }) {
+export default async function DashboardLayout({ children }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("th_token")?.value;
+  const role = cookieStore.get("th_role")?.value;
+  const enabled = cookieStore.get("th_enabled")?.value;
+
+  if (!token || !role) {
+    redirect("/login?redirect=/dashboard");
+  }
+
+  if (enabled === "false") {
+    redirect("/login?pending=1");
+  }
+
   return (
     <div className="min-h-screen bg-bright-snow">
       <header className="border-b border-black/5 bg-white">
