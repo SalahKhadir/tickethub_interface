@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 
 export default function LoginForm() {
@@ -39,9 +40,9 @@ export default function LoginForm() {
       }
 
       const role = user?.role;
-      if (role === "admin") {
+      if (role === ROLES.ADMIN) {
         router.replace(ROUTES.ADMIN);
-      } else if (role === "technician") {
+      } else if (role === ROLES.TECHNICIAN || role === "tech") {
         router.replace(ROUTES.TECHNICIAN);
       } else {
         router.replace(ROUTES.CLIENT);
@@ -85,11 +86,10 @@ export default function LoginForm() {
       ) : null}
       {error.message ? (
         <div
-          className={`rounded-xl border px-4 py-3 text-sm ${
-            error.type === "warning"
+          className={`rounded-xl border px-4 py-3 text-sm ${error.type === "warning"
               ? "border-golden-orange/30 bg-golden-orange/10 text-golden-orange"
               : "border-strawberry-red/30 bg-strawberry-red/10 text-strawberry-red"
-          }`}
+            }`}
         >
           {error.message}
         </div>
