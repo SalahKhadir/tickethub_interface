@@ -7,7 +7,7 @@ export default function AuthGate({ children }) {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-[rgba(17,24,39,0.08)] bg-white p-8 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-grey">
           Loading session
         </p>

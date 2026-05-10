@@ -4,25 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { ROUTES } from "@/constants/routes";
-import { getTickets } from "@/services/api";
+import { getTickets, fetchAPI } from "@/services/api";
+import PriorityBadge from "@/components/ui/PriorityBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 const STATUS_OPTIONS = ["", "NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"];
 const PRIORITY_OPTIONS = ["", "LOW", "MEDIUM", "HIGH", "URGENT"];
-
-const STATUS_BADGE_CLASSES = {
-    OPEN: "border-amber-300/70 bg-amber-100 text-amber-900",
-    IN_PROGRESS: "border-blue-300/70 bg-blue-100 text-blue-900",
-    RESOLVED: "border-emerald-300/70 bg-emerald-100 text-emerald-900",
-    CLOSED: "border-slate-300/70 bg-slate-200 text-slate-900",
-    NEW: "border-violet-300/70 bg-violet-100 text-violet-900",
-};
-
-const PRIORITY_BADGE_CLASSES = {
-    LOW: "border-emerald-300/70 bg-emerald-100 text-emerald-900",
-    MEDIUM: "border-yellow-300/70 bg-yellow-100 text-yellow-900",
-    HIGH: "border-orange-300/70 bg-orange-100 text-orange-900",
-    URGENT: "border-red-300/70 bg-red-100 text-red-900",
-};
 
 const formatDate = (value) => {
     if (!value) {
@@ -35,12 +22,12 @@ const formatDate = (value) => {
     return parsed.toLocaleString();
 };
 
-const getBadgeClasses = (value, classesMap) => {
-    const normalizedValue = String(value || "").toUpperCase();
-    return (
-        classesMap[normalizedValue] ||
-        "border-black/15 bg-white text-slate-grey"
-    );
+const getCardBorderClass = (priority) => {
+    const p = (priority || "LOW").toUpperCase();
+    if (p === "CRITICAL" || p === "URGENT") return "border-red-400";
+    if (p === "HIGH") return "border-orange-400";
+    if (p === "MEDIUM") return "border-yellow-400";
+    return "border-blue-400";
 };
 
 export default function ClientTicketsPanel() {
@@ -53,6 +40,13 @@ export default function ClientTicketsPanel() {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [expandedTicketId, setExpandedTicketId] = useState(null);
+    const [deletingTicketId, setDeletingTicketId] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteError, setDeleteError] = useState("");
+    const [editingTicketId, setEditingTicketId] = useState(null);
+    const [editForm, setEditForm] = useState({ title: "", description: "", priority: "" });
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState("");
 
     const loadTickets = useCallback(async () => {
         setLoading(true);
@@ -80,6 +74,57 @@ export default function ClientTicketsPanel() {
             setLoading(false);
         }
     }, [currentPage, priorityFilter, statusFilter]);
+    
+    const handleDeleteTicket = async (ticketId) => {
+        setDeleteLoading(true);
+        setDeleteError("");
+        try {
+            await fetchAPI(`/api/tickets/${ticketId}`, { method: "DELETE" });
+            setDeletingTicketId(null);
+            loadTickets();
+        } catch (err) {
+            setDeleteError(
+                err?.response?.data?.message ||
+                err?.message ||
+                "Failed to delete ticket. Please try again."
+            );
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const handleEditSubmit = async (ticketId) => {
+        if (!editForm.title.trim()) {
+            setEditError("Title cannot be empty.");
+            return;
+        }
+        if (!editForm.description.trim()) {
+            setEditError("Description cannot be empty.");
+            return;
+        }
+        setEditLoading(true);
+        setEditError("");
+        try {
+            await fetchAPI(`/api/tickets/${ticketId}`, {
+                method: "PATCH",
+                data: {
+                    title: editForm.title.trim(),
+                    description: editForm.description.trim(),
+                    priority: editForm.priority,
+                },
+            });
+            setEditingTicketId(null);
+            loadTickets();
+        } catch (err) {
+            setEditError(
+                err?.response?.data?.message ||
+                err?.message ||
+                "Failed to update ticket."
+            );
+        } finally {
+            setEditLoading(false);
+        }
+    };
 
     useEffect(() => {
         loadTickets();
@@ -109,7 +154,7 @@ export default function ClientTicketsPanel() {
     });
 
     return (
-        <section className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
+        <section className="rounded-2xl border border-[rgba(17,24,39,0.08)] bg-white p-8 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-grey">
@@ -124,14 +169,14 @@ export default function ClientTicketsPanel() {
                     <Link
                         href={ROUTES.CLIENT}
                         prefetch={false}
-                        className="inline-flex h-10 items-center justify-center rounded-full border border-black/15 bg-white px-4 text-sm font-semibold text-ink-black transition hover:border-electric-sapphire"
+                        className="inline-flex h-10 items-center justify-center rounded-[10px] border border-[rgba(17,24,39,0.10)] bg-white px-4 text-sm font-semibold text-ink-black transition-all duration-200 hover:border-electric-sapphire hover:bg-bright-snow hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0"
                     >
                         Back to dashboard
                     </Link>
                     <Link
                         href={ROUTES.CLIENT_NEW_TICKET}
                         prefetch={false}
-                        className="inline-flex h-10 items-center justify-center rounded-full bg-electric-sapphire px-4 text-sm font-semibold text-bright-snow transition hover:bg-bright-indigo"
+                        className="inline-flex h-10 items-center justify-center rounded-[10px] bg-electric-sapphire px-4 text-sm font-semibold text-bright-snow transition-all duration-200 hover:bg-bright-indigo hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
                     >
                         Create ticket
                     </Link>
@@ -143,7 +188,7 @@ export default function ClientTicketsPanel() {
                     <select
                         value={statusFilter}
                         onChange={handleStatusChange}
-                        className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-electric-sapphire/30"
+                        className="h-10 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-3 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                     >
                         {STATUS_OPTIONS.map((status) => (
                             <option key={status || "ALL_STATUS"} value={status}>
@@ -154,7 +199,7 @@ export default function ClientTicketsPanel() {
                     <select
                         value={priorityFilter}
                         onChange={handlePriorityChange}
-                        className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-electric-sapphire/30"
+                        className="h-10 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-3 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                     >
                         {PRIORITY_OPTIONS.map((priority) => (
                             <option key={priority || "ALL_PRIORITY"} value={priority}>
@@ -167,7 +212,7 @@ export default function ClientTicketsPanel() {
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
                         placeholder="Search by title"
-                        className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm text-ink-black placeholder:text-slate-grey focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-electric-sapphire/30"
+                        className="h-10 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-3 text-sm text-ink-black placeholder:text-slate-grey focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                     />
                 </div>
                 <Button
@@ -182,7 +227,7 @@ export default function ClientTicketsPanel() {
             </div>
 
             {error ? (
-                <div className="mt-4 rounded-xl border border-strawberry-red/30 bg-strawberry-red/10 px-4 py-3 text-sm text-strawberry-red">
+                <div className="mt-4 rounded-[10px] border border-[rgba(239,68,68,0.25)] bg-[#FEE2E2] px-4 py-3 text-sm text-[#991B1B]">
                     {error}
                 </div>
             ) : null}
@@ -194,7 +239,7 @@ export default function ClientTicketsPanel() {
                     <p className="text-sm text-slate-grey">No tickets found.</p>
                 ) : (
                     displayedTickets.map((ticket) => (
-                        <article key={ticket.id} className="rounded-xl border border-black/10 p-4">
+                        <article key={ticket.id} className={`rounded-[14px] border bg-white p-4 transition hover:shadow-[0_4px_16px_rgba(99,102,241,0.08)] ${getCardBorderClass(ticket.priority)}`}>
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 className="text-base font-semibold text-ink-black">
@@ -206,53 +251,165 @@ export default function ClientTicketsPanel() {
                                 </div>
                                 <button
                                     type="button"
-                                    className="h-8 rounded-full border border-black/15 px-3 text-xs font-semibold text-ink-black transition hover:border-electric-sapphire"
+                                    className="h-8 rounded-xl bg-blue-600 px-4 text-xs font-medium text-white transition-all duration-200 hover:bg-blue-700 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
                                     onClick={() =>
                                         setExpandedTicketId((prev) => (prev === ticket.id ? null : ticket.id))
                                     }
                                 >
-                                    {expandedTicketId === ticket.id ? "Hide details" : "Details"}
+                                    {expandedTicketId === ticket.id ? "Hide details" : "View Details"}
                                 </button>
+                                {ticket.status === "NEW" && (
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => {
+                                                setEditingTicketId(ticket.id);
+                                                setEditForm({
+                                                    title: ticket.title,
+                                                    description: ticket.description,
+                                                    priority: ticket.priority,
+                                                });
+                                                setEditError("");
+                                            }}
+                                            className="text-gray-300 hover:text-blue-500 transition p-1 rounded-lg hover:bg-blue-50"
+                                            title="Edit ticket"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingTicketId(ticket.id)}
+                                            className="text-gray-300 hover:text-red-500 transition p-1 rounded-lg hover:bg-red-50"
+                                            title="Delete ticket"
+                                        >
+                                            🗑
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide">
-                                <span
-                                    className={`rounded-full border px-3 py-1 ${getBadgeClasses(
-                                        ticket.status,
-                                        STATUS_BADGE_CLASSES
-                                    )}`}
-                                >
-                                    Status: {ticket.status || "N/A"}
-                                </span>
-                                <span
-                                    className={`rounded-full border px-3 py-1 ${getBadgeClasses(
-                                        ticket.priority,
-                                        PRIORITY_BADGE_CLASSES
-                                    )}`}
-                                >
-                                    Priority: {ticket.priority || "N/A"}
-                                </span>
-                                <span className="rounded-full border border-black/15 bg-white px-3 py-1 text-slate-grey">
+                            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                                <StatusBadge status={ticket.status} />
+                                <PriorityBadge priority={ticket.priority} />
+                                <span className="rounded-full border border-[rgba(17,24,39,0.10)] bg-white px-3 py-1 text-slate-grey h-[26px] inline-flex items-center transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:shadow-md hover:bg-gray-50 cursor-default">
                                     Category: {ticket.category || "N/A"}
                                 </span>
                             </div>
 
-                            {expandedTicketId === ticket.id ? (
-                                <div className="mt-4 grid gap-2 rounded-xl border border-black/10 bg-smoke-silver/40 p-4 text-sm text-ink-black md:grid-cols-2">
-                                    <p>
-                                        <span className="font-semibold">Ticket ID:</span> {ticket.id || "N/A"}
+                            {deletingTicketId === ticket.id && (
+                                <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-center justify-between">
+                                    <p className="text-red-600 text-sm font-medium">
+                                        Are you sure you want to delete this ticket? This cannot be undone.
                                     </p>
-                                    <p>
-                                        <span className="font-semibold">Created:</span> {formatDate(ticket.createdAt)}
-                                    </p>
-                                    <p>
-                                        <span className="font-semibold">Updated:</span> {formatDate(ticket.updatedAt)}
-                                    </p>
-                                    <p>
-                                        <span className="font-semibold">Assignee:</span> {ticket.assigneeName || "N/A"}
-                                    </p>
+                                    <div className="flex items-center gap-2 ml-4 shrink-0">
+                                        <button
+                                            onClick={() => handleDeleteTicket(ticket.id)}
+                                            disabled={deleteLoading}
+                                            className="bg-red-500 text-white rounded-xl px-3 py-1.5 text-xs font-medium hover:bg-red-600 disabled:opacity-50 transition"
+                                        >
+                                            {deleteLoading ? "Deleting..." : "Yes, delete"}
+                                        </button>
+                                        <button
+                                            onClick={() => { setDeletingTicketId(null); setDeleteError(""); }}
+                                            className="border border-gray-200 text-gray-600 rounded-xl px-3 py-1.5 text-xs hover:bg-gray-50 transition"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
                                 </div>
-                            ) : null}
+                            )}
+                            {deleteError && deletingTicketId === ticket.id && (
+                                <p className="text-red-500 text-xs mt-2">{deleteError}</p>
+                            )}
+
+                            {editingTicketId === ticket.id && (
+                                <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-3 shadow-sm">
+                                    <p className="text-blue-700 font-semibold text-sm">Edit Ticket</p>
+
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600">Title</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.title}
+                                            onChange={e => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                                            className="border border-gray-200 rounded-xl px-4 py-2 text-sm w-full focus:border-blue-400 focus:outline-none bg-white"
+                                            placeholder="Ticket title"
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600">Description</label>
+                                        <textarea
+                                            value={editForm.description}
+                                            onChange={e => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                                            className="border border-gray-200 rounded-xl px-4 py-2 text-sm w-full min-h-[80px] resize-none focus:border-blue-400 focus:outline-none bg-white"
+                                            placeholder="Describe the issue"
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600">Priority</label>
+                                        <select
+                                            value={editForm.priority}
+                                            onChange={e => setEditForm(prev => ({ ...prev, priority: e.target.value }))}
+                                            className="border border-gray-200 rounded-xl px-4 py-2 text-sm w-full focus:border-blue-400 focus:outline-none bg-white"
+                                        >
+                                            <option value="LOW">Low</option>
+                                            <option value="MEDIUM">Medium</option>
+                                            <option value="HIGH">High</option>
+                                            <option value="CRITICAL">Critical</option>
+                                        </select>
+                                    </div>
+
+                                    {editError && (
+                                        <p className="text-red-500 text-xs">{editError}</p>
+                                    )}
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleEditSubmit(ticket.id)}
+                                            disabled={editLoading}
+                                            className="bg-blue-600 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
+                                        >
+                                            {editLoading ? "Saving..." : "Save Changes"}
+                                        </button>
+                                        <button
+                                            onClick={() => { setEditingTicketId(null); setEditError(""); }}
+                                            className="border border-gray-200 text-gray-600 rounded-xl px-4 py-2 text-sm hover:bg-gray-50 transition bg-white"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {expandedTicketId === ticket.id && (
+                                <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p className="text-gray-500 font-medium mb-1">Full Description</p>
+                                            <p className="text-gray-900 bg-white p-3 rounded-lg border border-gray-100">{ticket.description || "No description provided."}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500 font-medium mb-1">Ticket Information</p>
+                                            <div className="bg-white p-3 rounded-lg border border-gray-100 space-y-2">
+                                                <p><span className="text-gray-500">ID:</span> TH-{ticket.id}</p>
+                                                <p><span className="text-gray-500">Created:</span> {formatDate(ticket.createdAt)}</p>
+                                                <p><span className="text-gray-500">Last Updated:</span> {formatDate(ticket.updatedAt)}</p>
+                                                <p><span className="text-gray-500">Assignee:</span> {ticket?.assigneeName || ticket?.assignedTo?.name || ticket?.assignedTo?.username || "Unassigned"}</p>
+                                                <p><span className="text-gray-500">Category:</span> {ticket.category || "N/A"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {ticket.status === "RESOLVED" && (
+                                        <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
+                                            <p className="text-sm font-semibold text-green-800 mb-1">Resolution Summary</p>
+                                            <p className="text-sm text-green-700">
+                                                {ticket?.solution || "No solution provided yet."}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </article>
                     ))
                 )}

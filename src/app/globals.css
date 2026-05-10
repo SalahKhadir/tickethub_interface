@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bright-snow: #f9fafb;
+  --color-bright-snow: #F9FAFB;
   --color-ink-black: #111827;
-  --color-slate-grey: #6b7280;
-  --color-electric-sapphire: #6366f1;
-  --color-bright-indigo: #4338ca;
-  --color-soft-periwinkle: #818cf8;
-  --color-strawberry-red: #ef4444;
-  --color-golden-orange: #f59e0b;
-  --color-royal-blue: #2563eb;
-  --color-mint-leaf: #10b981;
+  --color-slate-grey: #6B7280;
+  --color-electric-sapphire: #6366F1;
+  --color-bright-indigo: #4338CA;
+  --color-soft-periwinkle: #818CF8;
+  --color-strawberry-red: #EF4444;
+  --color-golden-orange: #F59E0B;
+  --color-royal-blue: #2563EB;
+  --color-mint-leaf: #10B981;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -22,5 +22,181 @@
 
   body {
     @apply bg-bright-snow text-ink-black font-sans antialiased;
+    background-color: var(--color-bright-snow);
   }
+}
+
+/* design system helpers */
+:root {
+  --card-bg: #FFFFFF;
+  --card-border: rgba(17, 24, 39, 0.08);
+  --card-border-soft: rgba(17, 24, 39, 0.07);
+  --input-border: rgba(17, 24, 39, 0.12);
+  --focus-ring: rgba(99, 102, 241, 0.15);
+}
+
+.badge-card {
+  position: relative;
+  border-radius: 999px;
+  z-index: 1;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.08), -2px -2px 8px rgba(255,255,255,0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+.badge-card:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 6px 6px 16px rgba(0,0,0,0.12), -3px -3px 10px rgba(255,255,255,0.9);
+}
+
+.badge-card:hover .badge-blob {
+  filter: blur(16px) brightness(1.2);
+  animation-duration: 2s;
+}
+
+.badge-bg {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  border-radius: 999px;
+  outline: 1.5px solid rgba(255,255,255,0.8);
+}
+
+.badge-label {
+  position: relative;
+  z-index: 3;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+
+.badge-blob {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  opacity: 0.85;
+  filter: blur(8px);
+  animation: badge-blob-bounce 4s infinite ease;
+}
+
+@keyframes badge-blob-bounce {
+  0%   { transform: translate(-100%, -100%) translate3d(0, 0, 0); }
+  25%  { transform: translate(-100%, -100%) translate3d(100%, 0, 0); }
+  50%  { transform: translate(-100%, -100%) translate3d(100%, 100%, 0); }
+  75%  { transform: translate(-100%, -100%) translate3d(0, 100%, 0); }
+  100% { transform: translate(-100%, -100%) translate3d(0, 0, 0); }
+}
+
+/* Per-priority blob colors */
+.blob-critical { background-color: #EF4444; }
+.blob-high     { background-color: #F97316; }
+.blob-medium   { background-color: #EAB308; }
+.blob-low      { background-color: #3B82F6; }
+
+/* Per-status blob colors */
+.blob-new        { background-color: #3B82F6; }
+.blob-accepted   { background-color: #8B5CF6; }
+.blob-inprogress { background-color: #F59E0B; }
+.blob-resolved   { background-color: #10B981; }
+.blob-closed     { background-color: #6B7280; }
+
+/* Per-priority text colors */
+.text-critical { color: #DC2626; }
+.text-high     { color: #EA580C; }
+.text-medium   { color: #CA8A04; }
+.text-low      { color: #2563EB; }
+
+/* Per-status text colors */
+.text-new        { color: #2563EB; }
+.text-accepted   { color: #7C3AED; }
+.text-inprogress { color: #D97706; }
+.text-resolved   { color: #059669; }
+.text-closed     { color: #4B5563; }
+
+/* Animated Logout Button */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition-duration: .3s;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+  background-color: rgb(255, 65, 65);
+}
+
+/* plus sign */
+.logout-btn .sign {
+  width: 100%;
+  transition-duration: .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-btn .sign svg {
+  width: 17px;
+}
+
+.logout-btn .sign svg path {
+  fill: white;
+}
+
+/* text */
+.logout-btn .text {
+  position: absolute;
+  right: 0%;
+  width: 0%;
+  opacity: 0;
+  color: white;
+  font-size: 1.2em;
+  font-weight: 600;
+  transition-duration: .3s;
+}
+
+/* hover effect on button width */
+.logout-btn:hover {
+  width: 125px;
+  border-radius: 40px;
+  transition-duration: .3s;
+}
+
+.logout-btn:hover .sign {
+  width: 30%;
+  transition-duration: .3s;
+  padding-left: 20px;
+}
+
+/* hover effect button's text */
+.logout-btn:hover .text {
+  opacity: 1;
+  width: 70%;
+  transition-duration: .3s;
+  padding-right: 10px;
+}
+
+/* button click effect*/
+.logout-btn:active {
+  transform: translate(2px ,2px);
 }

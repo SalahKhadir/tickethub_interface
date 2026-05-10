@@ -74,13 +74,8 @@ export default function TicketForm() {
     };
 
     return (
-        <section className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
-            <h3 className="text-xl font-semibold text-ink-black">Declare a ticket</h3>
-            <p className="mt-2 text-sm text-slate-grey">
-                Provide details about your issue and our team will handle it quickly.
-            </p>
-
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <section>
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <Input
                     label="Title"
                     name="title"
@@ -104,7 +99,7 @@ export default function TicketForm() {
                         onChange={handleChange}
                         placeholder="Describe the issue in detail"
                         rows={5}
-                        className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink-black placeholder:text-slate-grey focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-electric-sapphire/30"
+                        className="rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-4 py-3 text-sm text-ink-black placeholder:text-slate-grey focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                         required
                     />
                 </div>
@@ -122,7 +117,7 @@ export default function TicketForm() {
                             name="priority"
                             value={formState.priority}
                             onChange={handleChange}
-                            className="h-11 rounded-xl border border-black/10 bg-white px-4 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-electric-sapphire/30"
+                            className="h-11 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-4 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                             required
                         >
                             {PRIORITY_OPTIONS.map((option) => (
@@ -145,7 +140,7 @@ export default function TicketForm() {
                             name="category"
                             value={formState.category}
                             onChange={handleChange}
-                            className="h-11 rounded-xl border border-black/10 bg-white px-4 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-electric-sapphire/30"
+                            className="h-11 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-4 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                             required
                         >
                             {CATEGORY_OPTIONS.map((option) => (
@@ -158,20 +153,31 @@ export default function TicketForm() {
                 </div>
 
                 {error ? (
-                    <div className="rounded-xl border border-strawberry-red/30 bg-strawberry-red/10 px-4 py-3 text-sm text-strawberry-red">
+                    <div className="rounded-[10px] border border-[rgba(239,68,68,0.25)] bg-[#FEE2E2] px-4 py-3 text-sm text-[#991B1B]">
                         {error}
                     </div>
                 ) : null}
 
                 {success ? (
-                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700">
+                    <div className="rounded-[10px] border border-[rgba(16,185,129,0.25)] bg-[#D1FAE5] px-4 py-3 text-sm text-[#065F46]">
                         {success}
                     </div>
                 ) : null}
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Submitting..." : "Create ticket"}
-                </Button>
+                <div className="pt-2">
+                    <button 
+                        type="submit" 
+                        className="w-full bg-blue-600 text-white font-medium text-sm px-4 py-3 rounded-xl transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <>
+                                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                                Submitting...
+                            </>
+                        ) : "Submit Ticket"}
+                    </button>
+                </div>
             </form>
         </section>
     );
