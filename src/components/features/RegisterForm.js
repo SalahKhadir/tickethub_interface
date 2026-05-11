@@ -45,7 +45,7 @@ export default function RegisterForm() {
 
   if (isSuccess) {
     return (
-      <section className="rounded-2xl border border-black/5 bg-white p-8 text-center shadow-sm">
+      <section className="rounded-2xl border border-[rgba(17,24,39,0.08)] bg-white p-8 text-center shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-grey">
           Registration submitted
         </p>
@@ -56,7 +56,7 @@ export default function RegisterForm() {
           Your account is awaiting administrator approval.
         </p>
         <Link
-          className="mt-6 inline-flex h-10 items-center justify-center rounded-full border border-black/10 px-5 text-sm font-semibold text-ink-black transition hover:border-electric-sapphire"
+          className="mt-6 inline-flex h-10 items-center justify-center rounded-[10px] border border-[rgba(17,24,39,0.10)] px-5 text-sm font-semibold text-ink-black transition hover:border-electric-sapphire hover:bg-bright-snow"
           href="/login"
         >
           Back to sign in
@@ -66,7 +66,7 @@ export default function RegisterForm() {
   }
 
   return (
-    <section className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
+    <section className="rounded-2xl border border-[rgba(17,24,39,0.08)] bg-white p-8 shadow-sm">
       <h1 className="text-2xl font-semibold text-ink-black">Request access</h1>
       <p className="mt-2 text-sm text-slate-grey">
         New accounts require administrator approval before they can sign in.
@@ -124,7 +124,7 @@ export default function RegisterForm() {
           required
         />
         {error ? (
-          <div className="rounded-xl border border-strawberry-red/30 bg-strawberry-red/10 px-4 py-3 text-sm text-strawberry-red">
+          <div className="rounded-[10px] border border-[rgba(239,68,68,0.25)] bg-[#FEE2E2] px-4 py-3 text-sm text-[#991B1B]">
             {error}
           </div>
         ) : null}
@@ -133,7 +133,7 @@ export default function RegisterForm() {
         </Button>
       </form>
       <Link
-        className="mt-6 inline-flex h-10 items-center justify-center rounded-full border border-black/10 px-5 text-sm font-semibold text-ink-black transition hover:border-electric-sapphire"
+        className="mt-6 inline-flex h-10 items-center justify-center rounded-[10px] border border-[rgba(17,24,39,0.10)] px-5 text-sm font-semibold text-ink-black transition hover:border-electric-sapphire hover:bg-bright-snow"
         href="/login"
       >
         Back to sign in

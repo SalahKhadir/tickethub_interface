@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 
 export default function LoginForm() {
@@ -39,9 +40,9 @@ export default function LoginForm() {
       }
 
       const role = user?.role;
-      if (role === "admin") {
+      if (role === ROLES.ADMIN) {
         router.replace(ROUTES.ADMIN);
-      } else if (role === "technician") {
+      } else if (role === ROLES.TECHNICIAN || role === "tech") {
         router.replace(ROUTES.TECHNICIAN);
       } else {
         router.replace(ROUTES.CLIENT);
@@ -79,17 +80,16 @@ export default function LoginForm() {
         required
       />
       {pendingParam ? (
-        <div className="rounded-xl border border-golden-orange/30 bg-golden-orange/10 px-4 py-3 text-sm text-golden-orange">
+        <div className="rounded-[10px] border border-[rgba(245,158,11,0.25)] bg-[#FEF3C7] px-4 py-3 text-sm text-[#D97706]">
           Your account is awaiting administrator approval.
         </div>
       ) : null}
       {error.message ? (
         <div
-          className={`rounded-xl border px-4 py-3 text-sm ${
-            error.type === "warning"
-              ? "border-golden-orange/30 bg-golden-orange/10 text-golden-orange"
-              : "border-strawberry-red/30 bg-strawberry-red/10 text-strawberry-red"
-          }`}
+          className={`rounded-[10px] border px-4 py-3 text-sm ${error.type === "warning"
+              ? "border-[rgba(245,158,11,0.25)] bg-[#FEF3C7] text-[#D97706]"
+              : "border-[rgba(239,68,68,0.25)] bg-[#FEE2E2] text-[#991B1B]"
+            }`}
         >
           {error.message}
         </div>

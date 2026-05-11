@@ -7,14 +7,27 @@ const ROLE_GATES = [
   { prefix: "/dashboard/client", roles: [ROLES.ADMIN, ROLES.CLIENT] },
 ];
 
+const normalizeRole = (value) => {
+  if (!value) {
+    return null;
+  }
+  const role = String(value).toLowerCase();
+  if (role === "tech") {
+    return ROLES.TECHNICIAN;
+  }
+  return role;
+};
+
 const resolveDashboardHome = (role) => {
-  if (role === ROLES.ADMIN) {
+  const normalizedRole = normalizeRole(role);
+
+  if (normalizedRole === ROLES.ADMIN) {
     return "/dashboard/admin";
   }
-  if (role === ROLES.TECHNICIAN) {
+  if (normalizedRole === ROLES.TECHNICIAN) {
     return "/dashboard/technician";
   }
-  if (role === ROLES.CLIENT) {
+  if (normalizedRole === ROLES.CLIENT) {
     return "/dashboard/client";
   }
   return "/dashboard";
@@ -28,7 +41,7 @@ export function middleware(request) {
   }
 
   const token = request.cookies.get("th_token")?.value;
-  const role = request.cookies.get("th_role")?.value;
+  const role = normalizeRole(request.cookies.get("th_role")?.value);
   const enabled = request.cookies.get("th_enabled")?.value;
 
   if (!token) {

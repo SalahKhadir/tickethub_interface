@@ -41,6 +41,9 @@ const normalizeRole = (value) => {
   while (normalized.startsWith("role_")) {
     normalized = normalized.slice("role_".length);
   }
+  if (normalized === "tech") {
+    return "technician";
+  }
   return normalized;
 };
 

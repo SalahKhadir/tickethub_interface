@@ -10,7 +10,7 @@ export default function Input({ label, id, className = "", ...props }) {
       ) : null}
       <input
         id={inputId}
-        className={`h-11 rounded-xl border border-black/10 bg-white px-4 text-sm text-ink-black placeholder:text-slate-grey focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-electric-sapphire/30 ${className}`}
+        className={`h-11 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-4 text-sm text-ink-black placeholder:text-slate-grey shadow-sm shadow-black/5 focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)] ${className}`}
         {...props}
       />
     </div>

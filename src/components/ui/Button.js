@@ -1,9 +1,11 @@
 const baseStyles =
-  "inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric-sapphire/40 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-[10px] text-sm font-medium transition focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
 const variants = {
-  primary: "bg-electric-sapphire text-bright-snow hover:bg-bright-indigo",
-  ghost: "border border-black/10 text-ink-black hover:border-electric-sapphire",
+  primary:
+    "bg-electric-sapphire text-bright-snow hover:bg-bright-indigo px-5 py-[10px] shadow-sm shadow-electric-sapphire/10",
+  ghost:
+    "bg-transparent border border-electric-sapphire text-electric-sapphire hover:bg-bright-snow px-5 py-[10px]",
 };
 
 export default function Button({
