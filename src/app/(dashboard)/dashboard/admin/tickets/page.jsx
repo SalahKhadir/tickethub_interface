@@ -287,8 +287,23 @@ export default function AdminTicketsPage() {
                             onToggleDetails={() =>
                                 setExpandedTicketId((prev) => (prev === ticket.id ? null : ticket.id))
                             }
-                            headerRight={
-                                String(ticket.status || "").toUpperCase() === "ACCEPTED" || String(ticket.status || "").toUpperCase() === "NEW" ? (
+                            headerRight={(() => {
+                                const status = String(ticket.status || "").toUpperCase();
+                                const isAssignable = status === "ACCEPTED" || status === "NEW";
+                                const assigneeName = ticket.assigneeName || assignedTechnicianByTicket[ticket.id];
+
+                                if (!isAssignable) return null;
+
+                                if (assigneeName) {
+                                    return (
+                                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                            {assigneeName}
+                                        </span>
+                                    );
+                                }
+
+                                return (
                                     <button
                                         type="button"
                                         className="bg-blue-600 text-white rounded-xl px-4 py-1.5 text-xs font-bold hover:bg-blue-700 hover:shadow-md transition-all active:translate-y-0 hover:-translate-y-0.5"
@@ -296,8 +311,8 @@ export default function AdminTicketsPage() {
                                     >
                                         Assign Tech
                                     </button>
-                                ) : null
-                            }
+                                );
+                            })()}
                             details={
                                 <div className="grid gap-4 rounded-xl border border-gray-100 bg-gray-50/50 p-5 text-sm text-gray-800 md:grid-cols-2 shadow-inner">
                                     <div className="space-y-3">
