@@ -209,6 +209,27 @@ export const assignTicket = async (id, technicianId) => {
   });
 };
 
+export const getTechnicianAvailability = async () => {
+  const payload = await fetchAPI("/api/technicians/availability", { method: "GET" });
+  // Expected shape: [{ technicianId, activeTickets }] or a wrapper
+  const list = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.content)
+    ? payload.content
+    : Array.isArray(payload?.data)
+    ? payload.data
+    : [];
+  // Normalise to a Map<technicianId, activeTickets> for O(1) lookup
+  return list.reduce((acc, entry) => {
+    const id = entry?.technicianId ?? entry?.id ?? entry?.userId;
+    const count = entry?.activeTickets ?? entry?.activeTicketCount ?? entry?.count ?? 0;
+    if (id !== undefined && id !== null) {
+      acc[String(id)] = Number(count);
+    }
+    return acc;
+  }, {});
+};
+
 export const resolveTicket = (id, solution) => {
   return fetchAPI(`/api/tickets/${id}/status`, {
     method: "PATCH",

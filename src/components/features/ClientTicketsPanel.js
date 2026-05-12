@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { ROUTES } from "@/constants/routes";
 import { getTickets, fetchAPI } from "@/services/api";
@@ -31,13 +32,32 @@ const getCardBorderClass = (priority) => {
 };
 
 export default function ClientTicketsPanel() {
+    const router       = useRouter();
+    const pathname     = usePathname();
+    const searchParams = useSearchParams();
+
+    const pageParam     = Number(searchParams.get("page")     || "0");
+    const statusParam   = searchParams.get("status")   || "";
+    const priorityParam = searchParams.get("priority") || "";
+
+    const pushParams = useCallback((updates) => {
+        const params = new URLSearchParams(searchParams.toString());
+        Object.entries(updates).forEach(([k, v]) => {
+            if (v) params.set(k, v); else params.delete(k);
+        });
+        params.set("page", "0");
+        router.replace(`${pathname}?${params.toString()}`);
+    }, [searchParams, pathname, router]);
+
+    const setPage = useCallback((p) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", String(p));
+        router.replace(`${pathname}?${params.toString()}`);
+    }, [searchParams, pathname, router]);
+
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [statusFilter, setStatusFilter] = useState("");
-    const [priorityFilter, setPriorityFilter] = useState("");
-    const [searchTerm, setSearchTerm] = useState("");
-    const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [expandedTicketId, setExpandedTicketId] = useState(null);
     const [deletingTicketId, setDeletingTicketId] = useState(null);
@@ -54,13 +74,12 @@ export default function ClientTicketsPanel() {
 
         try {
             const pageData = await getTickets({
-                page: currentPage,
-                status: statusFilter || undefined,
-                priority: priorityFilter || undefined,
+                page: pageParam,
+                status: statusParam || undefined,
+                priority: priorityParam || undefined,
             });
 
             setTickets(Array.isArray(pageData?.content) ? pageData.content : []);
-            setCurrentPage(typeof pageData?.number === "number" ? pageData.number : 0);
             setTotalPages(
                 typeof pageData?.totalPages === "number" ? pageData.totalPages : 0
             );
@@ -73,7 +92,7 @@ export default function ClientTicketsPanel() {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, priorityFilter, statusFilter]);
+    }, [pageParam, priorityParam, statusParam]);
     
     const handleDeleteTicket = async (ticketId) => {
         setDeleteLoading(true);
@@ -130,28 +149,8 @@ export default function ClientTicketsPanel() {
         loadTickets();
     }, [loadTickets]);
 
-    const hasPrevious = currentPage > 0;
-    const hasNext = totalPages > 0 && currentPage + 1 < totalPages;
-
-    const handlePriorityChange = (event) => {
-        setCurrentPage(0);
-        setPriorityFilter(event.target.value);
-    };
-
-    const handleStatusChange = (event) => {
-        setCurrentPage(0);
-        setStatusFilter(event.target.value);
-    };
-
-    const displayedTickets = tickets.filter((ticket) => {
-        if (!searchTerm.trim()) {
-            return true;
-        }
-        const keyword = searchTerm.toLowerCase();
-        const title = String(ticket?.title || "").toLowerCase();
-        const description = String(ticket?.description || "").toLowerCase();
-        return title.includes(keyword) || description.includes(keyword);
-    });
+    const hasPrevious = pageParam > 0;
+    const hasNext = totalPages > 0 && pageParam + 1 < totalPages;
 
     return (
         <section className="rounded-2xl border border-[rgba(17,24,39,0.08)] bg-white p-8 shadow-sm">
@@ -186,8 +185,8 @@ export default function ClientTicketsPanel() {
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                     <select
-                        value={statusFilter}
-                        onChange={handleStatusChange}
+                        value={statusParam}
+                        onChange={(e) => pushParams({ status: e.target.value })}
                         className="h-10 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-3 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                     >
                         {STATUS_OPTIONS.map((status) => (
@@ -197,8 +196,8 @@ export default function ClientTicketsPanel() {
                         ))}
                     </select>
                     <select
-                        value={priorityFilter}
-                        onChange={handlePriorityChange}
+                        value={priorityParam}
+                        onChange={(e) => pushParams({ priority: e.target.value })}
                         className="h-10 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-3 text-sm text-ink-black focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
                     >
                         {PRIORITY_OPTIONS.map((priority) => (
@@ -207,13 +206,7 @@ export default function ClientTicketsPanel() {
                             </option>
                         ))}
                     </select>
-                    <input
-                        type="search"
-                        value={searchTerm}
-                        onChange={(event) => setSearchTerm(event.target.value)}
-                        placeholder="Search by title"
-                        className="h-10 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-3 text-sm text-ink-black placeholder:text-slate-grey focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)]"
-                    />
+
                 </div>
                 <Button
                     type="button"
@@ -235,10 +228,10 @@ export default function ClientTicketsPanel() {
             <div className="mt-5 space-y-3">
                 {loading ? (
                     <p className="text-sm text-slate-grey">Loading tickets...</p>
-                ) : displayedTickets.length === 0 ? (
+                ) : tickets.length === 0 ? (
                     <p className="text-sm text-slate-grey">No tickets found.</p>
                 ) : (
-                    displayedTickets.map((ticket) => (
+                    tickets.map((ticket) => (
                         <article key={ticket.id} className={`rounded-[14px] border bg-white p-4 transition hover:shadow-[0_4px_16px_rgba(99,102,241,0.08)] ${getCardBorderClass(ticket.priority)}`}>
                             <div className="flex items-start justify-between gap-3">
                                 <div>
@@ -420,20 +413,20 @@ export default function ClientTicketsPanel() {
                     type="button"
                     variant="ghost"
                     disabled={!hasPrevious || loading}
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+                    onClick={() => setPage(pageParam - 1)}
                 >
                     Previous
                 </Button>
 
                 <p className="text-sm text-slate-grey">
-                    Page {totalPages === 0 ? 0 : currentPage + 1} / {totalPages}
+                    Page {totalPages === 0 ? 0 : pageParam + 1} / {totalPages}
                 </p>
 
                 <Button
                     type="button"
                     variant="ghost"
                     disabled={!hasNext || loading}
-                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    onClick={() => setPage(pageParam + 1)}
                 >
                     Next
                 </Button>
