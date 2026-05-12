@@ -20,6 +20,23 @@ const isSlaBreached = (ticket) => {
     return new Date() > deadline;
 };
 
+const getTicketAuthorName = (ticket) => {
+    const candidateNames = [
+        ticket?.authorName,
+        ticket?.creatorName,
+        ticket?.author_name,
+        ticket?.createdByName,
+        ticket?.createdBy?.name,
+        ticket?.createdBy?.fullName,
+        ticket?.author?.name,
+        ticket?.author?.fullName,
+        ticket?.clientName,
+    ];
+
+    const name = candidateNames.find((value) => String(value || "").trim());
+    return String(name || "").trim();
+};
+
 export default function TicketCard({
     ticket,
     expanded,
@@ -34,15 +51,25 @@ export default function TicketCard({
     if (p === "CRITICAL" || p === "URGENT") borderClass = "border-red-400";
     else if (p === "HIGH") borderClass = "border-orange-400";
     else if (p === "MEDIUM") borderClass = "border-yellow-400";
+    const authorName = getTicketAuthorName(ticket);
+    const authorLabel = authorName || ticket?.authorEmail || "System";
+    const authorSubtext = authorName && ticket?.authorEmail ? ticket.authorEmail : "";
+    const creatorInitials = (name) => {
+        if (!name) return "?";
+        return String(name)
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
+    };
 
     return (
-        <article
-            className={`relative rounded-2xl bg-white p-5 border border-gray-100 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-md overflow-hidden ${breached ? "border-l-4 border-l-red-500 bg-red-50/10" : ""}`}
-        >
-            <div className="flex items-start justify-between gap-6">
+        <article className={`bg-white rounded-2xl border p-4 shadow-sm mb-3 flex flex-col h-full ${borderClass} ${breached ? "critical-card bg-[#FFF5F5]" : ""}`}>
+            <div className="flex items-center justify-between mb-2">
                 <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-semibold text-gray-900 leading-tight">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">
                             {ticket?.title || "Untitled ticket"}
                         </h3>
                         {breached ? (
@@ -52,13 +79,32 @@ export default function TicketCard({
                             </span>
                         ) : null}
                     </div>
-                    <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-3xl line-clamp-2">
+                    <p className="mt-1 text-xs text-gray-500 leading-relaxed line-clamp-2">
                         {ticket?.description || "No description provided."}
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
                     {headerRight}
+                </div>
+            </div>
+
+            {children ? <div className="mt-4">{children}</div> : null}
+
+            <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
+                        {creatorInitials(authorName || authorLabel)}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-gray-700 text-sm truncate">{authorLabel}</p>
+                        {authorSubtext ? (
+                            <p className="text-gray-400 text-xs truncate">{authorSubtext}</p>
+                        ) : null}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={onToggleDetails}
@@ -68,10 +114,6 @@ export default function TicketCard({
                     </button>
                 </div>
             </div>
-
-            {children ? <div className="mt-4">{children}</div> : null}
-
-            {expanded && details ? <div className="mt-4">{details}</div> : null}
         </article>
     );
 }

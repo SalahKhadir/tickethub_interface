@@ -20,7 +20,7 @@ import {
 
 const getInitials = (name) => {
     if (!name) return "?";
-    return name
+    return String(name)
         .split(" ")
         .map((n) => n[0])
         .join("")
@@ -33,36 +33,60 @@ const formatSLATime = (deadline) => {
     const now = Date.now();
     const deadlineTime = new Date(deadline).getTime();
     const diff = deadlineTime - now;
+    const absoluteDiff = Math.abs(diff);
+    const totalMinutes = Math.floor(absoluteDiff / (1000 * 60));
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
 
-    if (diff < 0) {
-        const hours = Math.floor(Math.abs(diff) / (1000 * 60 * 60));
-        const minutes = Math.floor((Math.abs(diff) % (1000 * 60 * 60)) / (1000 * 60));
-        return { overdue: true, hours, minutes };
-    }
+    return {
+        overdue: diff < 0,
+        days,
+        hours,
+        minutes,
+    };
+};
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return { overdue: false, hours, minutes };
+const getTicketAuthorName = (ticket) => {
+    const candidateNames = [
+        ticket?.authorName,
+        ticket?.creatorName,
+        ticket?.author_name,
+        ticket?.createdByName,
+        ticket?.createdBy?.name,
+        ticket?.createdBy?.fullName,
+        ticket?.author?.name,
+        ticket?.author?.fullName,
+        ticket?.clientName,
+    ];
+
+    const name = candidateNames.find((value) => String(value || "").trim());
+    return String(name || "").trim();
 };
 
 const TicketCard = ({ ticket, onStartWork, onResolveClick }) => {
     const priority = (ticket?.priority || "LOW").toUpperCase();
     const isCritical = priority === "CRITICAL";
     const status = (ticket?.status || "").toUpperCase();
-    const isInProgress = status === "IN_PROGRESS";
+    const showSlaTimer = isCritical && status !== "RESOLVED" && status !== "CLOSED";
     const [slaTime, setSlaTime] = useState(() => formatSLATime(ticket?.slaDeadline));
 
     useEffect(() => {
-        if (!isCritical) return;
+        if (!showSlaTimer) {
+            return undefined;
+        }
 
         const interval = setInterval(() => {
             setSlaTime(formatSLATime(ticket?.slaDeadline));
         }, 60000);
 
         return () => clearInterval(interval);
-    }, [isCritical, ticket?.slaDeadline]);
+    }, [showSlaTimer, ticket?.slaDeadline, ticket?.status]);
 
-    const reporterInitials = getInitials(ticket?.createdBy || ticket?.clientName || "?");
+    const authorName = getTicketAuthorName(ticket);
+    const authorLabel = authorName || ticket?.authorEmail || "System";
+    const authorSubtext = authorName && ticket?.authorEmail ? ticket.authorEmail : "";
+    const reporterInitials = getInitials(authorName || authorLabel);
 
     let borderClass = "border-blue-400";
     if (priority === "CRITICAL" || priority === "URGENT") borderClass = "border-red-400";
@@ -90,7 +114,7 @@ const TicketCard = ({ ticket, onStartWork, onResolveClick }) => {
             )}
 
             {/* SLA Timer (only for CRITICAL) */}
-            {isCritical && slaTime && (
+            {showSlaTimer && slaTime && (
                 <div
                     style={{
                         backgroundColor: slaTime.overdue ? "#FFF1F0" : "#FFF9E6",
@@ -101,20 +125,25 @@ const TicketCard = ({ ticket, onStartWork, onResolveClick }) => {
                 >
                     <Clock size={14} />
                     <span>
+                        {slaTime.days > 0 ? `${slaTime.days}d ` : ""}
                         {slaTime.hours}h {slaTime.minutes}m {slaTime.overdue ? "overdue" : "remaining"}
                     </span>
                 </div>
             )}
 
             {/* Footer: reporter + action pinned to bottom */}
-            <div className="mt-4 mt-auto">
+            <div className="mt-auto">
                 <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
                         {reporterInitials}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-gray-700 text-sm truncate">{ticket?.clientName || ticket?.client?.name || ticket?.createdBy || "Unknown"}</p>
-                        <p className="text-gray-400 text-xs">TH-{ticket?.id || "0"}</p>
+                        <p className="text-gray-700 text-sm truncate">{authorLabel}</p>
+                        {authorSubtext ? (
+                            <p className="text-gray-400 text-xs truncate">{authorSubtext}</p>
+                        ) : (
+                            <p className="text-gray-400 text-xs">TH-{ticket?.id || "0"}</p>
+                        )}
                     </div>
                 </div>
 
@@ -364,8 +393,8 @@ export default function TechnicianTicketsPage() {
                                     rows={5}
                                     disabled={resolving}
                                     className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 transition resize-none disabled:opacity-60 ${resolveError
-                                            ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-                                            : "border-gray-200 focus:border-blue-400 focus:ring-blue-100"
+                                        ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                                        : "border-gray-200 focus:border-blue-400 focus:ring-blue-100"
                                         }`}
                                 />
                                 {resolveError && (

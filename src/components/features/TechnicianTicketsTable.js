@@ -31,7 +31,7 @@ export default function TechnicianTicketsTable({ tickets }) {
           {tickets.map((ticket) => {
             const sla =
               ticket.priority === "CRITICAL"
-                ? formatSLA(ticket.slaDeadline)
+                ? formatSLA(ticket.slaDeadline, ticket.status, ticket.updatedAt)
                 : null;
 
             return (
@@ -55,8 +55,10 @@ export default function TechnicianTicketsTable({ tickets }) {
                   {ticket.priority === "CRITICAL" ? (
                     <span
                       className={
-                        sla?.overdue
-                          ? "text-red-500 text-xs"
+                        sla?.status === "met"
+                          ? "text-green-500 font-semibold text-xs"
+                          : sla?.overdue
+                          ? "text-red-500 font-semibold text-xs"
                           : "text-amber-600 text-xs"
                       }
                     >
