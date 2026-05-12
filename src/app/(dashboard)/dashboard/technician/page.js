@@ -14,23 +14,28 @@ export default function TechnicianDashboardPage() {
   const tickets = useMemo(() => Array.isArray(data?.content) ? data.content : [], [data]);
   const { user } = useAuth();
 
-  const totalAssigned = tickets.length;
-  const inProgress = tickets.filter(t => t.status === "IN_PROGRESS").length;
-  const critical = tickets.filter(t => t.priority === "CRITICAL").length;
-  const resolvedToday = tickets.filter(t => {
-    if (t.status !== "RESOLVED") return false;
-    return new Date(t.updatedAt).toDateString() === new Date().toDateString();
-  }).length;
-  
-  const slaBreached = tickets.filter(t =>
+  const activeTickets = useMemo(
+    () => tickets.filter((ticket) => {
+      const status = String(ticket?.status || "").toUpperCase();
+      return status !== "RESOLVED" && status !== "CLOSED";
+    }),
+    [tickets]
+  );
+
+  const totalAssigned = activeTickets.length;
+  const inProgress = activeTickets.filter(t => t.status === "IN_PROGRESS").length;
+  const critical = activeTickets.filter(t => t.priority === "CRITICAL").length;
+  const resolvedToday = 0;
+
+  const slaBreached = activeTickets.filter(t =>
     t.priority === "CRITICAL" &&
     t.slaDeadline &&
     new Date(t.slaDeadline).getTime() < Date.now() &&
     t.status !== "RESOLVED" &&
     t.status !== "CLOSED"
   );
-  
-  const recentTickets = [...tickets]
+
+  const recentTickets = [...activeTickets]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5);
 
@@ -55,25 +60,37 @@ export default function TechnicianDashboardPage() {
   };
 
   const formatSLA = (ticket) => {
-    if (ticket.priority !== "CRITICAL" || !ticket.slaDeadline) return <span className="text-gray-300">—</span>;
+    const status = String(ticket?.status || "").toUpperCase();
+    if (status === "RESOLVED" || status === "CLOSED") {
+      return <span className="text-gray-300">—</span>;
+    }
+
+    if (ticket.priority !== "CRITICAL" || !ticket.slaDeadline) {
+      return <span className="text-gray-300">—</span>;
+    }
+
     const diff = new Date(ticket.slaDeadline).getTime() - Date.now();
     const abs = Math.abs(diff);
-    const h = Math.floor(abs / 3600000);
-    const m = Math.floor((abs % 3600000) / 60000);
+    const totalMinutes = Math.floor(abs / 60000);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    const timeLabel = `${days > 0 ? `${days}d ` : ""}${hours}h ${minutes}m`;
+
     return diff > 0
-      ? <span className="text-amber-600 text-xs font-medium">{h}h {m}m remaining</span>
-      : <span className="text-red-500 text-xs font-bold animate-pulse">{h}h {m}m overdue</span>;
+      ? <span className="text-amber-600 text-xs font-medium">{timeLabel} remaining</span>
+      : <span className="text-red-500 text-xs font-bold animate-pulse">{timeLabel} overdue</span>;
   };
 
   const renderAction = (ticket) => {
     if (resolvingTicket === ticket.id) {
       return (
-        <div className="flex flex-col gap-2 min-w-[200px]">
+        <div className="flex flex-col gap-2 min-w-50">
           <textarea
             value={solution}
             onChange={e => setSolution(e.target.value)}
             placeholder="Describe the solution..."
-            className="border border-gray-200 rounded-xl px-3 py-2 text-xs w-full min-h-[60px] resize-none focus:border-blue-400 outline-none transition"
+            className="border border-gray-200 rounded-xl px-3 py-2 text-xs w-full min-h-15 resize-none focus:border-blue-400 outline-none transition"
           />
           <div className="flex gap-2">
             <button onClick={() => handleSubmitSolution(ticket.id)}
@@ -108,7 +125,7 @@ export default function TechnicianDashboardPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto w-full pb-10">
+    <div className="space-y-6 max-w-300 mx-auto w-full pb-10">
 
       {/* Welcome */}
       <div>
@@ -209,7 +226,7 @@ export default function TechnicianDashboardPage() {
                 <tr key={ticket.id}
                   className={`border-t border-gray-100 hover:bg-gray-50 transition ${ticket.priority === "CRITICAL" ? "border-l-4 border-l-red-400" : ""}`}>
                   <td className="px-6 py-4 text-gray-400 font-mono text-xs whitespace-nowrap">TH-{ticket.id}</td>
-                  <td className="px-6 py-4 text-gray-900 font-medium text-sm max-w-[200px] truncate" title={ticket.title}>{ticket.title}</td>
+                  <td className="px-6 py-4 text-gray-900 font-medium text-sm max-w-50 truncate" title={ticket.title}>{ticket.title}</td>
                   <td className="px-6 py-4 whitespace-nowrap"><PriorityBadge priority={ticket.priority} /></td>
                   <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={ticket.status} /></td>
                   <td className="px-6 py-4 whitespace-nowrap">{formatSLA(ticket)}</td>

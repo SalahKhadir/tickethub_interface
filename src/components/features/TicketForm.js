@@ -11,7 +11,7 @@ const PRIORITY_OPTIONS = [
     { value: "LOW", label: "Low" },
     { value: "MEDIUM", label: "Medium" },
     { value: "HIGH", label: "High" },
-    { value: "URGENT", label: "Urgent" },
+    { value: "CRITICAL", label: "Critical" },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -165,8 +165,8 @@ export default function TicketForm() {
                 ) : null}
 
                 <div className="pt-2">
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className="w-full bg-blue-600 text-white font-medium text-sm px-4 py-3 rounded-xl transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
                         disabled={loading}
                     >
