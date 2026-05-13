@@ -16,13 +16,31 @@ const STATUS_STYLES = {
     CLOSED:      "bg-gray-100 text-gray-500",
 };
 
-const STATUS_TEXT = {
-    NEW:         "New Ticket: Needs Assignment",
-    OPEN:        "New Ticket: Needs Assignment",
-    ACCEPTED:    "Update: Ticket Assigned",
-    IN_PROGRESS: "Update: Tech Started Work",
-    RESOLVED:    "Ticket has been resolved",
-    CLOSED:      "Ticket was closed",
+const STATUS_TEXT_BY_ROLE = {
+    [ROLES.ADMIN]: {
+        NEW:         "New Ticket Alert",
+        OPEN:        "New Ticket Alert",
+        ACCEPTED:    "Update: Ticket Assigned",
+        IN_PROGRESS: "Update: Tech Started Work",
+        RESOLVED:    "Ticket Resolved",
+        CLOSED:      "Ticket Closed",
+    },
+    [ROLES.TECHNICIAN]: {
+        NEW:         "New Ticket Available",
+        OPEN:        "New Ticket Available",
+        ACCEPTED:    "New Assignment",
+        IN_PROGRESS: "In Progress",
+        RESOLVED:    "Ticket Resolved",
+        CLOSED:      "Ticket Closed",
+    },
+    [ROLES.CLIENT]: {
+        NEW:         "Ticket Submitted",
+        OPEN:        "Ticket Submitted",
+        ACCEPTED:    "Ticket Accepted",
+        IN_PROGRESS: "Being Worked On",
+        RESOLVED:    "Ticket Resolved",
+        CLOSED:      "Ticket Closed",
+    },
 };
 
 const DOT_STYLES = {
@@ -95,10 +113,11 @@ export default function NotificationDropdown({ onClose }) {
                     </li>
                 ) : (
                     notifications.map((ticket) => {
-                        const status = String(ticket.status || "").toUpperCase();
+                        const status     = String(ticket.status || "").toUpperCase();
                         const badgeClass = STATUS_STYLES[status] || "bg-gray-100 text-gray-500";
-                        const message   = STATUS_TEXT[status]   || "Ticket updated";
-                        const date      = ticket.updatedAt || ticket.createdAt;
+                        const roleMap    = STATUS_TEXT_BY_ROLE[role] || STATUS_TEXT_BY_ROLE[ROLES.CLIENT];
+                        const message    = roleMap[status] || "Ticket updated";
+                        const date       = ticket.updatedAt || ticket.createdAt;
 
                         return (
                             <li key={ticket.id}>

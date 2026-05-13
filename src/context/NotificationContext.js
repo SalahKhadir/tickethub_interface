@@ -34,8 +34,9 @@ export function NotificationProvider({ children }) {
     const { isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount]     = useState(0);
-    const seenRef   = useRef(readSeen());
-    const esRef     = useRef(null);
+    const seenRef          = useRef(readSeen());
+    const notificationsRef  = useRef([]);
+    const esRef             = useRef(null);
     const retryRef      = useRef(null);
     const retryCountRef = useRef(0);
     const pingRef       = useRef(null);
@@ -72,14 +73,20 @@ export function NotificationProvider({ children }) {
                 const ticket = JSON.parse(event.data);
                 if (!ticket?.id) return;
 
-                setNotifications((prev) => {
-                    const filtered = prev.filter((t) => t.id !== ticket.id);
-                    return [ticket, ...filtered];
-                });
+                const ticketId  = String(ticket.id);
+                const isDuplicate = notificationsRef.current.some((t) => t.id === ticket.id);
+                const isUnseen    = !seenRef.current.has(ticketId);
 
-                if (!seenRef.current.has(String(ticket.id))) {
+                if (isDuplicate) return;
+
+                // Update list
+                notificationsRef.current = [ticket, ...notificationsRef.current];
+                setNotifications([...notificationsRef.current]);
+
+                // Side effects — fully outside any updater
+                if (isUnseen) {
                     setUnreadCount((c) => c + 1);
-                    toast(`🎫 Ticket TH-${ticket.id} has been updated.`, {
+                    toast.success(`New Update: ${ticket.title || `TH-${ticketId}`}`, {
                         duration: 4000,
                         style: {
                             background: "#111C2D",
@@ -95,11 +102,12 @@ export function NotificationProvider({ children }) {
             }
         };
 
-        es.onmessage                              = handleTicket; // unnamed events
+        es.onmessage                         = handleTicket; // unnamed events (no event: field)
         es.addEventListener("message",       handleTicket);
         es.addEventListener("ticket-update", handleTicket);
 
         es.onerror = () => {
+            console.log("SSE EventSource State:", es.readyState);
             es.close();
             esRef.current = null;
             retryCountRef.current += 1;
@@ -150,6 +158,7 @@ export function NotificationProvider({ children }) {
             clearInterval(pingRef.current);
             esRef.current?.close();
             esRef.current = null;
+            notificationsRef.current = [];
             setNotifications([]);
             setUnreadCount(0);
         }
