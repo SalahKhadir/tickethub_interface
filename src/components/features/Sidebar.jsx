@@ -36,8 +36,9 @@ const NAV_BY_ROLE = {
         { label: "History",          href: ROUTES.TECHNICIAN_HISTORY,  icon: History },
     ],
     [ROLES.CLIENT]: [
-        { label: "My Tickets",  href: ROUTES.CLIENT_TICKETS,     icon: Ticket },
-        { label: "New Ticket",  href: ROUTES.CLIENT_NEW_TICKET,  icon: PlusCircle },
+        { label: "Dashboard",  href: ROUTES.CLIENT,             icon: LayoutDashboard },
+        { label: "My Tickets", href: ROUTES.CLIENT_TICKETS,     icon: Ticket },
+        { label: "New Ticket", href: ROUTES.CLIENT_NEW_TICKET,  icon: PlusCircle },
     ],
 };
 

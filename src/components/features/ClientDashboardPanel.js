@@ -282,6 +282,13 @@ export default function ClientDashboardPanel() {
                     <p className="mt-1 text-sm text-gray-500">Manage and track your support requests</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Link
+                        href={ROUTES.CLIENT_TICKETS}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-blue-400 hover:text-blue-600 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                        <Ticket size={18} />
+                        My Tickets
+                    </Link>
                     <button 
                         onClick={handleExport}
                         className="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-gray-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
@@ -634,13 +641,22 @@ export default function ClientDashboardPanel() {
                 <div className="rounded-2xl border border-gray-100 bg-white px-6 py-12 text-center shadow-sm">
                     <AlertCircle size={40} className="mx-auto mb-3 text-gray-300" />
                     <p className="text-gray-500">No tickets found</p>
-                    <Link
-                        href={ROUTES.CLIENT_NEW_TICKET}
-                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                        <Plus size={18} />
-                        Create your first ticket
-                    </Link>
+                    <div className="mt-4 flex items-center justify-center gap-3">
+                        <Link
+                            href={ROUTES.CLIENT_TICKETS}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-blue-400 hover:text-blue-600 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                            <Ticket size={18} />
+                            View All Tickets
+                        </Link>
+                        <Link
+                            href={ROUTES.CLIENT_NEW_TICKET}
+                            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                            <Plus size={18} />
+                            Create your first ticket
+                        </Link>
+                    </div>
                 </div>
             )}
         </div>

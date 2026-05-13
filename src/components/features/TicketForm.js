@@ -46,7 +46,7 @@ export default function TicketForm() {
 
         try {
             await createTicket(formState);
-            setSuccess("Ticket created successfully. Redirecting to dashboard...");
+            setSuccess("Ticket created successfully. Redirecting to your tickets...");
             setFormState({
                 title: "",
                 description: "",
@@ -54,7 +54,7 @@ export default function TicketForm() {
                 category: CATEGORY_OPTIONS[0].value,
             });
             setTimeout(() => {
-                router.push(ROUTES.CLIENT);
+                router.push(ROUTES.CLIENT_TICKETS);
             }, 1000);
         } catch (err) {
             const status = err?.response?.status;
