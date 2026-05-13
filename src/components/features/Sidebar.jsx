@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -31,8 +31,9 @@ const NAV_BY_ROLE = {
         { label: "History",      href: "/dashboard/admin/history", icon: History },
     ],
     [ROLES.TECHNICIAN]: [
-        { label: "Assigned Tickets", href: ROUTES.TECHNICIAN_TICKETS, icon: Ticket },
-        { label: "Profile",          href: ROUTES.TECHNICIAN,          icon: Users },
+        { label: "Dashboard",        href: ROUTES.TECHNICIAN,         icon: LayoutDashboard },
+        { label: "Assigned Tickets", href: ROUTES.TECHNICIAN_TICKETS,  icon: Ticket },
+        { label: "History",          href: ROUTES.TECHNICIAN_HISTORY,  icon: History },
     ],
     [ROLES.CLIENT]: [
         { label: "My Tickets",  href: ROUTES.CLIENT_TICKETS,     icon: Ticket },
@@ -58,7 +59,10 @@ export default function Sidebar() {
     const { unreadCount, markAllAsSeen } = useNotifications();
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
-    console.log("Current Unread:", unreadCount);
+
+    useEffect(() => {
+        console.log("Current Unread:", unreadCount);
+    }, [unreadCount]);
 
     const role = String(user?.role || "").toLowerCase();
     const navItems = NAV_BY_ROLE[role] ?? [];
@@ -116,7 +120,7 @@ export default function Sidebar() {
                         className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-gray-400 hover:bg-[#1F2937] hover:text-white transition-colors"
                     >
                         <Bell size={17} />
-                        {unreadCount >= 0 && (
+                        {unreadCount > 0 && (
                             <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
                                 {unreadCount > 99 ? "99+" : unreadCount}
                             </span>

@@ -10,17 +10,11 @@ import { Ticket, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 export default function TechnicianDashboardPage() {
-  const { data, refetch } = useFetch("/api/tickets?page=0");
+  const { data, refetch } = useFetch("/api/tickets?page=0&status=NEW,ACCEPTED,IN_PROGRESS");
   const tickets = useMemo(() => Array.isArray(data?.content) ? data.content : [], [data]);
   const { user } = useAuth();
 
-  const activeTickets = useMemo(
-    () => tickets.filter((ticket) => {
-      const status = String(ticket?.status || "").toUpperCase();
-      return status !== "RESOLVED" && status !== "CLOSED";
-    }),
-    [tickets]
-  );
+  const activeTickets = useMemo(() => tickets, [tickets]); // already filtered by API
 
   const totalAssigned = activeTickets.length;
   const inProgress = activeTickets.filter(t => t.status === "IN_PROGRESS").length;

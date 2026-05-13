@@ -34,9 +34,8 @@ export function NotificationProvider({ children }) {
     const { isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount]     = useState(0);
-    const seenRef          = useRef(readSeen());
-    const notificationsRef  = useRef([]);
-    const esRef             = useRef(null);
+    const seenRef   = useRef(readSeen());
+    const esRef      = useRef(null);
     const retryRef      = useRef(null);
     const retryCountRef = useRef(0);
     const pingRef       = useRef(null);
@@ -70,35 +69,34 @@ export function NotificationProvider({ children }) {
         const handleTicket = (event) => {
             console.log("Raw SSE Data received:", event.data);
             try {
-                const ticket = JSON.parse(event.data);
-                if (!ticket?.id) return;
+                const newTicket = JSON.parse(event.data);
+                if (!newTicket?.id) return;
 
-                const ticketId  = String(ticket.id);
-                const isDuplicate = notificationsRef.current.some((t) => t.id === ticket.id);
-                const isUnseen    = !seenRef.current.has(ticketId);
+                setNotifications((prev) => {
+                    const isDuplicate = prev.some((t) => t.id === newTicket.id);
+                    if (isDuplicate) return prev;
 
-                if (isDuplicate) return;
+                    // Side effects deferred to after this render cycle
+                    setTimeout(() => {
+                        if (!seenRef.current.has(String(newTicket.id))) {
+                            setUnreadCount((c) => c + 1);
+                            toast.success(`New Ticket: ${newTicket.title || `TH-${newTicket.id}`}`, {
+                                duration: 4000,
+                                style: {
+                                    background: "#111C2D",
+                                    color: "#fff",
+                                    fontSize: "13px",
+                                    borderRadius: "12px",
+                                    border: "1px solid #1F2937",
+                                },
+                            });
+                        }
+                    }, 0);
 
-                // Update list
-                notificationsRef.current = [ticket, ...notificationsRef.current];
-                setNotifications([...notificationsRef.current]);
-
-                // Side effects — fully outside any updater
-                if (isUnseen) {
-                    setUnreadCount((c) => c + 1);
-                    toast.success(`New Update: ${ticket.title || `TH-${ticketId}`}`, {
-                        duration: 4000,
-                        style: {
-                            background: "#111C2D",
-                            color: "#fff",
-                            fontSize: "13px",
-                            borderRadius: "12px",
-                            border: "1px solid #1F2937",
-                        },
-                    });
-                }
-            } catch {
-                // malformed event — ignore
+                    return [newTicket, ...prev];
+                });
+            } catch (err) {
+                console.error("SSE Parse Error:", err);
             }
         };
 
@@ -159,7 +157,9 @@ export function NotificationProvider({ children }) {
             clearInterval(pingRef.current);
             esRef.current?.close();
             esRef.current = null;
-            notificationsRef.current = [];
+            // Clear seen cache so next login starts with a fresh unread count
+            seenRef.current = new Set();
+            localStorage.removeItem(STORAGE_KEY);
             setNotifications([]);
             setUnreadCount(0);
         }

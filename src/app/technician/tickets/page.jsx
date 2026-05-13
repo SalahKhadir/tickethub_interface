@@ -227,9 +227,10 @@ export default function TechnicianTicketsPage() {
         }
     }, [authLoading, isAuthenticated, isTechnician, router]);
 
-    const { data: pageData, loading, error, refetch } = useFetch("/api/tickets?page=0", {
-        fallbackUrls: [],
-    });
+    const { data: pageData, loading, error, refetch } = useFetch(
+        "/api/tickets?page=0&status=NEW,ACCEPTED,IN_PROGRESS",
+        { fallbackUrls: ["/api/tickets?page=0"] }
+    );
 
     const allTickets = useMemo(() => {
         return Array.isArray(pageData?.content) ? pageData.content : [];
@@ -243,24 +244,15 @@ export default function TechnicianTicketsPage() {
         );
     }, [allTickets, searchTerm]);
 
-    const newTickets = useMemo(() => {
-        return filteredTickets.filter((t) => {
+    const newTickets = useMemo(() =>
+        filteredTickets.filter((t) => {
             const s = (t?.status || "").toUpperCase();
-            return s !== "IN_PROGRESS" && s !== "RESOLVED" && s !== "CLOSED";
-        });
-    }, [filteredTickets]);
+            return s === "NEW" || s === "ACCEPTED";
+        }), [filteredTickets]);
 
-    const inProgressTickets = useMemo(() => {
-        return filteredTickets.filter(
-            (t) => (t?.status || "").toUpperCase() === "IN_PROGRESS"
-        );
-    }, [filteredTickets]);
-
-    const resolvedTickets = useMemo(() => {
-        return filteredTickets.filter(
-            (t) => (t?.status || "").toUpperCase() === "RESOLVED" || (t?.status || "").toUpperCase() === "CLOSED"
-        );
-    }, [filteredTickets]);
+    const inProgressTickets = useMemo(() =>
+        filteredTickets.filter((t) => (t?.status || "").toUpperCase() === "IN_PROGRESS"),
+    [filteredTickets]);
 
     const handleStartWork = async (ticketId) => {
         try {
@@ -332,27 +324,20 @@ export default function TechnicianTicketsPage() {
                 <div className="text-center text-gray-500 py-8">Loading tickets...</div>
             ) : (
                 <div className="max-w-7xl mx-auto w-full">
-                    <div className="grid grid-cols-3 gap-8">
+                    <div className="grid grid-cols-2 gap-8">
                         <KanbanColumn
-                            title="New Tickets"
+                            title="New / Accepted"
                             tickets={newTickets}
                             status="NEW"
                             onStartWork={handleStartWork}
-                            onResolveClick={() => { }}
+                            onResolveClick={() => {}}
                         />
                         <KanbanColumn
                             title="In Progress"
                             tickets={inProgressTickets}
                             status="IN_PROGRESS"
-                            onStartWork={() => { }}
+                            onStartWork={() => {}}
                             onResolveClick={(ticketId) => setResolveTicketId(ticketId)}
-                        />
-                        <KanbanColumn
-                            title="Resolved"
-                            tickets={resolvedTickets}
-                            status="RESOLVED"
-                            onStartWork={() => { }}
-                            onResolveClick={() => { }}
                         />
                     </div>
                 </div>
