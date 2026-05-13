@@ -231,4 +231,7 @@ export const resolveTicket = (id, solution) => {
 export const getTechnicianStats = () =>
   fetchAPI("/api/tickets/stats", { method: "GET" });
 
+export const getAdminGlobalStats = () =>
+  fetchAPI("/api/admin/stats/global", { method: "GET" });
+
 export default api;
