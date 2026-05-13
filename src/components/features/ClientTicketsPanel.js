@@ -10,7 +10,7 @@ import PriorityBadge from "@/components/ui/PriorityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 const STATUS_OPTIONS = ["", "NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"];
-const PRIORITY_OPTIONS = ["", "LOW", "MEDIUM", "HIGH", "URGENT"];
+const PRIORITY_OPTIONS = ["", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 const formatDate = (value) => {
     if (!value) {

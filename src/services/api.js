@@ -102,23 +102,15 @@ export const createTicket = (data) => {
 };
 
 export const getTickets = (params = {}) => {
-  const { page, status, priority } = params;
+  const { page, status, priority, category } = params;
   const queryParams = {};
 
-  if (page !== undefined && page !== null) {
-    queryParams.page = page;
-  }
-  if (status !== undefined && status !== null && status !== "") {
-    queryParams.status = status;
-  }
-  if (priority !== undefined && priority !== null && priority !== "") {
-    queryParams.priority = priority;
-  }
+  if (page !== undefined && page !== null)                    queryParams.page     = page;
+  if (status   && status   !== "")                            queryParams.status   = status;
+  if (priority && priority !== "")                            queryParams.priority = priority;
+  if (category && category !== "")                            queryParams.category = category;
 
-  return fetchAPI("/api/tickets", {
-    method: "GET",
-    params: queryParams,
-  });
+  return fetchAPI("/api/tickets", { method: "GET", params: queryParams });
 };
 
 export const updateTicketStatus = (id, newStatus, extraData = {}) => {
@@ -172,17 +164,13 @@ const mapTechnicianRecord = (user = {}) => {
     user?.id || user?.userId || user?.technicianId || user?.uuid || user?.identifier;
   const label =
     user?.fullName ||
-    user?.name ||
     [user?.prenom, user?.nom].filter(Boolean).join(" ") ||
+    user?.name ||
     user?.username ||
     user?.email ||
     (id ? `Technician ${id}` : "Technician");
 
-  return {
-    ...user,
-    id,
-    fullName: label,
-  };
+  return { ...user, id, fullName: label };
 };
 
 export const getTechnicians = async () => {
@@ -211,7 +199,6 @@ export const assignTicket = async (id, technicianId) => {
 
 export const getTechnicianAvailability = async () => {
   const payload = await fetchAPI("/api/technicians/availability", { method: "GET" });
-  // Expected shape: [{ technicianId, activeTickets }] or a wrapper
   const list = Array.isArray(payload)
     ? payload
     : Array.isArray(payload?.content)
@@ -219,10 +206,10 @@ export const getTechnicianAvailability = async () => {
     : Array.isArray(payload?.data)
     ? payload.data
     : [];
-  // Normalise to a Map<technicianId, activeTickets> for O(1) lookup
+  // Normalise to Map<id, activeTicketsCount> — handles both old and new DTO shapes
   return list.reduce((acc, entry) => {
-    const id = entry?.technicianId ?? entry?.id ?? entry?.userId;
-    const count = entry?.activeTickets ?? entry?.activeTicketCount ?? entry?.count ?? 0;
+    const id    = entry?.id ?? entry?.technicianId ?? entry?.userId;
+    const count = entry?.activeTicketsCount ?? entry?.activeTickets ?? entry?.activeTicketCount ?? entry?.count ?? 0;
     if (id !== undefined && id !== null) {
       acc[String(id)] = Number(count);
     }

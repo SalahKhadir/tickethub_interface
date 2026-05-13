@@ -13,7 +13,7 @@ import PriorityBadge from "@/components/ui/PriorityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 const STATUS_OPTIONS   = ["", "NEW", "ACCEPTED", "IN_PROGRESS", "RESOLVED", "CLOSED"];
-const PRIORITY_OPTIONS = ["", "LOW", "MEDIUM", "HIGH", "URGENT"];
+const PRIORITY_OPTIONS = ["", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
 const CATEGORY_OPTIONS = ["", "HARDWARE", "SOFTWARE", "NETWORK", "SECURITY", "OTHER"];
 const OVERLOAD_THRESHOLD = 3;
 
@@ -381,7 +381,7 @@ export default function AdminTicketsPage() {
                                             </p>
                                             <p className="flex justify-between border-b border-gray-100 pb-2">
                                                 <span className="font-semibold text-gray-500 uppercase tracking-wider text-xs">Reporter</span>
-                                                <span className="font-medium text-gray-900">{ticket.createdBy || ticket.clientName || "Unknown"}</span>
+                                                <span className="font-medium text-gray-900">{ticket.authorName || ticket.createdBy || ticket.clientName || "Unknown"}</span>
                                             </p>
                                             <p className="flex justify-between border-b border-gray-100 pb-2">
                                                 <span className="font-semibold text-gray-500 uppercase tracking-wider text-xs">SLA Deadline</span>

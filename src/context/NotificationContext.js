@@ -102,7 +102,8 @@ export function NotificationProvider({ children }) {
             }
         };
 
-        es.onmessage                         = handleTicket; // unnamed events (no event: field)
+        // Use ONLY addEventListener — es.onmessage + addEventListener("message") both fire
+        // for the same unnamed event, causing the double-count bug
         es.addEventListener("message",       handleTicket);
         es.addEventListener("ticket-update", handleTicket);
 
