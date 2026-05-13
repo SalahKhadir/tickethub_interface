@@ -39,6 +39,7 @@ export default function ClientTicketsPanel() {
     const pageParam     = Number(searchParams.get("page")     || "0");
     const statusParam   = searchParams.get("status")   || "";
     const priorityParam = searchParams.get("priority") || "";
+    const keywordParam  = searchParams.get("keyword")  || "";
 
     const pushParams = useCallback((updates) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -75,8 +76,9 @@ export default function ClientTicketsPanel() {
         try {
             const pageData = await getTickets({
                 page: pageParam,
-                status: statusParam || undefined,
+                status:   statusParam   || undefined,
                 priority: priorityParam || undefined,
+                keyword:  keywordParam  || undefined,
             });
 
             setTickets(Array.isArray(pageData?.content) ? pageData.content : []);
@@ -92,7 +94,7 @@ export default function ClientTicketsPanel() {
         } finally {
             setLoading(false);
         }
-    }, [pageParam, priorityParam, statusParam]);
+    }, [pageParam, priorityParam, statusParam, keywordParam]);
     
     const handleDeleteTicket = async (ticketId) => {
         setDeleteLoading(true);
@@ -184,6 +186,13 @@ export default function ClientTicketsPanel() {
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
+                    <input
+                        type="search"
+                        value={keywordParam}
+                        onChange={(e) => pushParams({ keyword: e.target.value })}
+                        placeholder="Search tickets…"
+                        className="h-10 rounded-[10px] border border-[rgba(17,24,39,0.12)] bg-white px-3 text-sm text-ink-black placeholder:text-slate-grey focus:border-electric-sapphire focus:outline-none focus:ring-2 focus:ring-[rgba(99,102,241,0.15)] w-48"
+                    />
                     <select
                         value={statusParam}
                         onChange={(e) => pushParams({ status: e.target.value })}

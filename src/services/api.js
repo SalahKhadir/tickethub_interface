@@ -102,13 +102,14 @@ export const createTicket = (data) => {
 };
 
 export const getTickets = (params = {}) => {
-  const { page, status, priority, category } = params;
+  const { page, status, priority, category, keyword } = params;
   const queryParams = {};
 
-  if (page !== undefined && page !== null)                    queryParams.page     = page;
-  if (status   && status   !== "")                            queryParams.status   = status;
-  if (priority && priority !== "")                            queryParams.priority = priority;
-  if (category && category !== "")                            queryParams.category = category;
+  if (page !== undefined && page !== null)  queryParams.page     = page;
+  if (status   && status   !== "All" && status   !== "") queryParams.status   = status;
+  if (priority && priority !== "All" && priority !== "") queryParams.priority = priority;
+  if (category && category !== "All" && category !== "") queryParams.category = category;
+  if (keyword  && keyword.trim()  !== "")                queryParams.keyword  = keyword.trim();
 
   return fetchAPI("/api/tickets", { method: "GET", params: queryParams });
 };
