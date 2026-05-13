@@ -1,35 +1,56 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFetch } from "@/hooks/useFetch";
-import { updateTicketStatus } from "@/services/api";
+import { updateTicketStatus, getTechnicianStats } from "@/services/api";
 import PriorityBadge from "@/components/ui/PriorityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Ticket, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+
+const DEFAULT_STATS = { totalAssigned: 0, inProgress: 0, critical: 0, resolvedToday: 0 };
 
 export default function TechnicianDashboardPage() {
   const { data, refetch } = useFetch("/api/tickets?page=0&status=NEW,ACCEPTED,IN_PROGRESS");
   const tickets = useMemo(() => Array.isArray(data?.content) ? data.content : [], [data]);
   const { user } = useAuth();
 
-  const activeTickets = useMemo(() => tickets, [tickets]); // already filtered by API
+  const [stats, setStats]           = useState(DEFAULT_STATS);
+  const [statsLoading, setStatsLoading] = useState(true);
 
-  const totalAssigned = activeTickets.length;
-  const inProgress = activeTickets.filter(t => t.status === "IN_PROGRESS").length;
-  const critical = activeTickets.filter(t => t.priority === "CRITICAL").length;
-  const resolvedToday = 0;
+  useEffect(() => {
+    let active = true;
+    setStatsLoading(true);
+    getTechnicianStats()
+      .then((s) => {
+        if (active) setStats({
+          totalAssigned: s.assignedTickets  ?? s.totalAssigned  ?? 0,
+          inProgress:    s.inProgress                           ?? 0,
+          critical:      s.criticalPriority ?? s.critical       ?? 0,
+          resolvedToday: s.resolvedToday                        ?? 0,
+        });
+      })
+      .catch(() => {
+        // fallback: derive from active tickets already fetched
+        if (active) setStats({
+          totalAssigned: tickets.length,
+          inProgress:    tickets.filter(t => t.status === "IN_PROGRESS").length,
+          critical:      tickets.filter(t => t.priority === "CRITICAL").length,
+          resolvedToday: 0,
+        });
+      })
+      .finally(() => { if (active) setStatsLoading(false); });
+    return () => { active = false; };
+  }, [tickets]);
 
-  const slaBreached = activeTickets.filter(t =>
+  const slaBreached = tickets.filter(t =>
     t.priority === "CRITICAL" &&
     t.slaDeadline &&
-    new Date(t.slaDeadline).getTime() < Date.now() &&
-    t.status !== "RESOLVED" &&
-    t.status !== "CLOSED"
+    new Date(t.slaDeadline).getTime() < Date.now()
   );
 
-  const recentTickets = [...activeTickets]
+  const recentTickets = [...tickets]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5);
 
@@ -150,7 +171,7 @@ export default function TechnicianDashboardPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between shadow-sm hover:shadow-md transition cursor-default">
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">My Assigned Tickets</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{totalAssigned}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{statsLoading ? "…" : stats.totalAssigned}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
             <Ticket size={24} />
@@ -161,7 +182,7 @@ export default function TechnicianDashboardPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between shadow-sm hover:shadow-md transition cursor-default">
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">In Progress</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{inProgress}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{statsLoading ? "…" : stats.inProgress}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
             <Clock size={24} />
@@ -172,7 +193,7 @@ export default function TechnicianDashboardPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between shadow-sm hover:shadow-md transition cursor-default">
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Critical Priority</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{critical}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{statsLoading ? "…" : stats.critical}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600">
             <AlertTriangle size={24} />
@@ -183,7 +204,7 @@ export default function TechnicianDashboardPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between shadow-sm hover:shadow-md transition cursor-default">
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Resolved Today</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{resolvedToday}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{statsLoading ? "…" : stats.resolvedToday}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
             <CheckCircle2 size={24} />
