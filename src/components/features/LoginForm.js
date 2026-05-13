@@ -59,6 +59,17 @@ export default function LoginForm() {
     }
   };
 
+  const DEV_ACCOUNTS = [
+    { label: "Client", email: "lilsall.kh@gmail.com", password: "AnaClient123" },
+    { label: "Tech", email: "salaho.khadir@gmail.com", password: "AnaTech123" },
+    { label: "Admin", email: "salah.khadir@outlook.com", password: "AnaAdmin123" },
+  ];
+
+  const fillDevAccount = (account) => {
+    setFormState({ email: account.email, password: account.password });
+    setError({ message: "", type: "error" });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-4">
       <Input
@@ -94,6 +105,22 @@ export default function LoginForm() {
           {error.message}
         </div>
       ) : null}
+      {/* DEV ONLY — remove before production */}
+      <div className="rounded-[10px] border border-dashed border-amber-300 bg-amber-50 p-3 space-y-2">
+        <p className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">Dev quick-login</p>
+        <div className="flex gap-2">
+          {DEV_ACCOUNTS.map((acc) => (
+            <button
+              key={acc.label}
+              type="button"
+              onClick={() => fillDevAccount(acc)}
+              className="flex-1 rounded-lg border border-amber-200 bg-white py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition"
+            >
+              {acc.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Signing in..." : "Sign in"}
       </Button>
