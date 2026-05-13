@@ -13,11 +13,14 @@ import {
     PlusCircle,
     Menu,
     X,
+    Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import DashboardLogoutButton from "@/components/features/DashboardLogoutButton";
+import { useNotifications } from "@/context/NotificationContext";
+import NotificationDropdown from "@/components/features/NotificationDropdown";
 
 const NAV_BY_ROLE = {
     [ROLES.ADMIN]: [
@@ -52,7 +55,10 @@ const getInitials = (name = "") =>
 export default function Sidebar() {
     const pathname = usePathname();
     const { user } = useAuth();
+    const { unreadCount, markAllAsSeen } = useNotifications();
     const [open, setOpen] = useState(false);
+    const [notifOpen, setNotifOpen] = useState(false);
+    console.log("Current Unread:", unreadCount);
 
     const role = String(user?.role || "").toLowerCase();
     const navItems = NAV_BY_ROLE[role] ?? [];
@@ -101,6 +107,24 @@ export default function Sidebar() {
                 <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-white truncate">{displayName}</p>
                     <p className="text-xs text-gray-400 capitalize truncate">{role}</p>
+                </div>
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() => { setNotifOpen((p) => !p); markAllAsSeen(); }}
+                        aria-label="Notifications"
+                        className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-gray-400 hover:bg-[#1F2937] hover:text-white transition-colors"
+                    >
+                        <Bell size={17} />
+                        {unreadCount >= 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                        )}
+                    </button>
+                    {notifOpen && (
+                        <NotificationDropdown onClose={() => setNotifOpen(false)} />
+                    )}
                 </div>
                 <DashboardLogoutButton />
             </div>
