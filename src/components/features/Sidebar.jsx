@@ -14,6 +14,7 @@ import {
     Menu,
     X,
     Bell,
+    ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
@@ -21,14 +22,16 @@ import { ROUTES } from "@/constants/routes";
 import DashboardLogoutButton from "@/components/features/DashboardLogoutButton";
 import { useNotifications } from "@/context/NotificationContext";
 import NotificationDropdown from "@/components/features/NotificationDropdown";
+import { getPendingUsers } from "@/services/api";
 
 const NAV_BY_ROLE = {
     [ROLES.ADMIN]: [
-        { label: "Dashboard",    href: ROUTES.ADMIN,              icon: LayoutDashboard },
-        { label: "Tickets",      href: ROUTES.ADMIN_TICKETS,      icon: Ticket },
-        { label: "Technicians",  href: "/dashboard/admin/technicians", icon: Users },
-        { label: "Reports",      href: "/dashboard/admin/reports", icon: FileText },
-        { label: "History",      href: "/dashboard/admin/history", icon: History },
+        { label: "Dashboard",       href: ROUTES.ADMIN,                      icon: LayoutDashboard },
+        { label: "Tickets",         href: ROUTES.ADMIN_TICKETS,              icon: Ticket },
+        { label: "Technicians",     href: "/dashboard/admin/technicians",    icon: Users },
+        { label: "User Management", href: "/dashboard/admin/users",          icon: ShieldCheck },
+        { label: "Reports",         href: "/dashboard/admin/reports",        icon: FileText },
+        { label: "History",         href: "/dashboard/admin/history",        icon: History },
     ],
     [ROLES.TECHNICIAN]: [
         { label: "Dashboard",        href: ROUTES.TECHNICIAN,         icon: LayoutDashboard },
@@ -60,15 +63,31 @@ export default function Sidebar() {
     const { unreadCount, markAllAsSeen } = useNotifications();
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
-
-    useEffect(() => {
-        console.log("Current Unread:", unreadCount);
-    }, [unreadCount]);
+    const [pendingCount, setPendingCount] = useState(0);
 
     const role = String(user?.role || "").toLowerCase();
     const navItems = NAV_BY_ROLE[role] ?? [];
     const portalLabel = PORTAL_LABEL[role] ?? "Portal";
     const displayName = user?.username || user?.fullName || user?.name || "User";
+
+    useEffect(() => {
+        console.log("Current Unread:", unreadCount);
+    }, [unreadCount]);
+
+    // Poll pending users count for admin badge
+    useEffect(() => {
+        if (role !== ROLES.ADMIN) return;
+        const fetch = () =>
+            getPendingUsers()
+                .then((data) => {
+                    const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
+                    setPendingCount(list.length);
+                })
+                .catch(() => {});
+        fetch();
+        const id = setInterval(fetch, 60_000);
+        return () => clearInterval(id);
+    }, [role]);
 
     const sidebarContent = (
         <aside className="w-64 h-screen bg-[#111C2D] text-white flex flex-col">
@@ -98,7 +117,12 @@ export default function Sidebar() {
                             }`}
                         >
                             <Icon size={17} className="shrink-0" />
-                            <span>{item.label}</span>
+                            <span className="flex-1">{item.label}</span>
+                            {item.href === "/dashboard/admin/users" && pendingCount > 0 && (
+                                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                                    {pendingCount}
+                                </span>
+                            )}
                         </Link>
                     );
                 })}
