@@ -114,6 +114,7 @@ export function AuthProvider({ children }) {
 
       const decoded = jwtDecode(resolvedToken);
       const roleFromToken = readRoleFromToken(decoded);
+      console.log("[Auth] JWT decoded:", { sub: decoded.sub, role: decoded.role, exp: decoded.exp, enabled: decoded.enabled });
       if (!roleFromToken) {
         console.warn("Role claim missing in JWT; defaulting to client.");
       }

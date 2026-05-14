@@ -234,4 +234,13 @@ export const getTechnicianStats = () =>
 export const getAdminGlobalStats = () =>
   fetchAPI("/api/admin/stats/global", { method: "GET" });
 
+export const getPendingUsers = () =>
+  fetchAPI("/api/admin/users/pending", { method: "GET" });
+
+export const approveUser = (id) =>
+  fetchAPI(`/api/admin/users/${id}/approve`, { method: "PATCH" });
+
+export const adminCreateUser = (data) =>
+  fetchAPI("/api/admin/users", { method: "POST", data });
+
 export default api;
