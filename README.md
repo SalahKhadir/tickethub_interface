@@ -150,7 +150,7 @@ Accessible at `/dashboard/client` — requires the `client` role.
 - Quick links to submit a new ticket or view existing ones
 
 #### Submit Ticket (`/dashboard/client/new-ticket`)
-- Form fields: **Title**, **Description**, **Priority** (Low / Medium / High / Critical), **Category** (Network / Hardware / Software / Access)
+- Form fields: **Title**, **Description**, **Priority** (Low / Medium / High / Critical), **Category** (Network / Hardware / Software / Access / Security / Other)
 - Redirects to the tickets list on successful submission
 
 #### My Tickets (`/dashboard/client/tickets`)
